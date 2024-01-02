@@ -46,10 +46,13 @@ char show_menu_principal(void);
 void menu_registar_consultar_estudantes(struct estudante_data lista_alunos[], int alunos_count);
 
 // FUNÇÕES DE REGISTO
-int registar_estudante(struct estudante_data lista_alunos[], int alunos_count);
+void menu_registar_estudante(struct estudante_data lista_alunos[], int alunos_count);
+// FUNCÕES DE CONSULTA
+void menu_consultar_estudantes(struct estudante_data lista_alunos[], int alunos_count);
 
 // FUNÇÕES AUXILIARES
 int check_total_alunos(int total_alunos);
+int check_numero_aluno(struct estudante_data lista_alunos[], int alunos_count, int aluno_id);
 
 // FUNÇÕES DE ERRO
 void mostrar_erro(char erro[]);
@@ -67,7 +70,7 @@ int main(void)
 
   struct avaliacao_data lista_avaliacoes[MAX_AVALIACOES];
   int avaliacoes_count = 0;
-  
+
   do
   {
     menu_option = show_menu_principal();
@@ -119,21 +122,19 @@ char show_menu_principal(void)
 }
 
 // MENU REGISTAR E CONSULTAR ESTUDANTES
-
+// ---------------------------- REGISTAR ----------------------------
 void menu_registar_consultar_estudantes(struct estudante_data lista_alunos[], int alunos_count)
 {
   int option = 0;
 
   do
   {
-
     printf("▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃ M E N U ▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃\n");
 
     printf("\n① Registar os dados dos estudantes");
     printf("\n② Consultar os dados dos estudantes\n");
     printf("\n");
     printf("Ⓞ - Sair\n");
-
     printf("\n(-) Escolhe uma opção: ");
     scanf("%d", &option);
 
@@ -143,40 +144,38 @@ void menu_registar_consultar_estudantes(struct estudante_data lista_alunos[], in
   } while (option < 0 || option > 2);
 
   printf("\n\n opcao: %d\n\n", option);
-
   switch (option)
   {
   case 1:
-    registar_estudante(lista_alunos, alunos_count);
+    menu_registar_estudante(lista_alunos, alunos_count);
     break;
-
   case 2:
-    /* code */
+    menu_consultar_estudantes(lista_alunos, alunos_count);
     break;
-
   default:
     mostrar_erro("Opção inválida!\n");
     break;
   }
 }
 
-int registar_estudante(struct estudante_data lista_alunos[], int alunos_count)
+void menu_registar_estudante(struct estudante_data lista_alunos[], int alunos_count)
 {
-    // if (check_total_alunos(alunos_count))
-    //   return mostrar_erro("O numero maximo de alunos foi atingido!\n");
+  if (!check_total_alunos(alunos_count))
+    mostrar_erro("O numero maximo de alunos foi atingido!\n");
 
+  else
+  {
     int db_id = alunos_count + 1;
 
     int nr_aluno = 0;
-    char nome[MAX_NAME_LENGTH];
-    char email[MAX_EMAIL_LENGTH];
+    char nome[MAX_NAME_LENGTH], email[MAX_EMAIL_LENGTH];
     int codigo_curso = 0;
-
     printf("\n(-) Número de aluno: ");
     scanf("%d", &nr_aluno);
 
     // Limpar o buffer de entrada para evitar problemas com fgets
-    while (getchar() != '\n');
+    while (getchar() != '\n')
+      ;
 
     printf("(-) Nome: ");
     fgets(nome, MAX_NAME_LENGTH, stdin);
@@ -190,25 +189,80 @@ int registar_estudante(struct estudante_data lista_alunos[], int alunos_count)
     scanf("%d", &codigo_curso);
 
     // Copiar os dados para a struct no índice apropriado
-    strcpy(lista_alunos[db_id - 1].nome, nome);
-    strcpy(lista_alunos[db_id - 1].email, email);
-
-    lista_alunos[db_id - 1].nr_aluno = nr_aluno;
-    lista_alunos[db_id - 1].db_id = db_id;
-    lista_alunos[db_id - 1].codigo_curso = codigo_curso;
+    strcpy(lista_alunos[db_id].nome, nome);
+    strcpy(lista_alunos[db_id].email, email);
+    lista_alunos[db_id].nr_aluno = nr_aluno;
+    lista_alunos[db_id].db_id = db_id;
+    lista_alunos[db_id].codigo_curso = codigo_curso;
 
     printf("\n(+) Estudante registado com sucesso!\n");
 
     menu_registar_consultar_estudantes(lista_alunos, db_id);
-    return 0;
+  }
 }
 
+// ---------------------------- CONSULTAR ----------------------------
+void menu_consultar_estudantes(struct estudante_data lista_alunos[], int alunos_count)
+{
+
+  if (!alunos_count)
+    mostrar_erro("Não existem alunos registados!\n");
+
+  else
+  {
+
+    int estudante_id = 0;
+    do
+    {
+
+      printf("\nIndique o numero de estudante: ");
+      scanf("%d", &estudante_id);
+
+      if (estudante_id < 0 || estudante_id > alunos_count)
+        mostrar_erro("O ID do estudante não existe!\n");
+
+    } while (estudante_id < 0 || estudante_id > alunos_count);
+
+    if (!check_numero_aluno(lista_alunos, alunos_count, estudante_id))
+      mostrar_erro("O ID do estudante não existe!\n");
+    else
+    {
+
+      printf("\n\n");
+      printf("(-) Nome: %s\n", lista_alunos[estudante_id].nome);
+      printf("(-) Email: %s\n", lista_alunos[estudante_id].email);
+      printf("(-) Número de aluno: %d\n", lista_alunos[estudante_id].nr_aluno);
+      printf("(-) Código do curso: %d\n", lista_alunos[estudante_id].codigo_curso);
+      printf("\n\n");
+    }
+  }
+}
+
+// -------------------------------------------------------- FUNÇÕES AUXILIARES --------------------------------------------------------
 // Verificar se o numero total de alunos já foi atingido
 int check_total_alunos(int total_alunos)
 {
-  if (total_alunos == MAX_ALUNOS)
+  if (total_alunos >= MAX_ALUNOS)
     mostrar_erro("O numero maximo de alunos foi atingido!\n");
   return 1;
+
+  return 0;
+}
+
+// verificar se o aluno existe
+int check_numero_aluno(struct estudante_data lista_alunos[], int alunos_count, int aluno_id)
+{
+
+
+
+  for (int i = 0; i < alunos_count; i++)
+  {
+  
+    printf("numeros: %d \n", lista_alunos[i].nr_aluno);
+
+    if (lista_alunos[i].nr_aluno == aluno_id)
+      return 1;
+  }
 
   return 0;
 }
