@@ -243,7 +243,7 @@ int check_total_alunos(int total_alunos)
 // verificar se o aluno existe
 int check_numero_aluno(struct estudante_data lista_alunos[], int alunos_count, int aluno_id)
 {
-
+  // percorrer ao ficheiro (data.txt) e verificar se o aluno existe
   for (int i = 0; i < alunos_count; i++)
   {
     if (lista_alunos[i].nr_aluno == aluno_id)
