@@ -11,6 +11,8 @@
 #define MAX_UC_NAME_LENGTH 256
 
 #define MAX_ERRO_LENGTH 256
+#define MAX_ACCEPTABLE_STRING 512
+#define MAX_ACCEPTABLE_NUMBER 999
 struct estudante_data
 {
   int db_id;
@@ -43,16 +45,22 @@ struct avaliacao_data
 
 // MENU
 int show_menu_principal(void);
-void menu_registar_consultar_estudantes(struct estudante_data lista_alunos[], int alunos_count);
+void menu_registar_consultar_estudantes(struct estudante_data lista_alunos[], int);
+void menu_registar_consultar_uc(struct unidade_curricular lista_uc[], int);
 
 // FUNÇÕES DE REGISTO
-void menu_registar_estudante(struct estudante_data lista_alunos[], int alunos_count);
+void menu_registar_estudante(struct estudante_data lista_alunos[], int);
+void menu_registar_uc(struct unidade_curricular lista_uc[], int);
 // FUNCÕES DE CONSULTA
-void menu_consultar_estudantes(struct estudante_data lista_alunos[], int alunos_count);
+void menu_consultar_estudantes(struct estudante_data lista_alunos[], int);
+void menu_consultar_uc(struct unidade_curricular lista_uc[], int);
 
 // FUNÇÕES AUXILIARES
-int check_total_alunos(int total_alunos);
-int check_numero_aluno(struct estudante_data lista_alunos[], int alunos_count, int aluno_id);
+int check_total_alunos(int);
+int check_numero_uc(struct unidade_curricular lista_uc[], int, int);
+int check_numero_aluno(struct estudante_data lista_alunos[], int, int);
+char* ler_string(char [], int);
+int ler_numero(char []);
 
 // FUNÇÕES DE ERRO
 void mostrar_erro(char erro[]);
@@ -80,6 +88,16 @@ int main(void)
     case 1:
     {
       menu_registar_consultar_estudantes(lista_alunos, alunos_count);
+      break;
+    }
+    case 2:
+    {
+      menu_registar_consultar_uc(lista_uc, uc_count);
+      break;
+    }
+
+    case 3:
+    {
       break;
     }
 
@@ -163,11 +181,9 @@ void menu_registar_consultar_estudantes(struct estudante_data lista_alunos[], in
 
 void menu_registar_estudante(struct estudante_data lista_alunos[], int alunos_count)
 {
-  int db_id = alunos_count + 1;
-
-  int nr_aluno = 0;
+  int db_id = alunos_count + 1, nr_aluno = 0, codigo_curso = 0;
   char nome[MAX_NAME_LENGTH], email[MAX_EMAIL_LENGTH];
-  int codigo_curso = 0;
+  
   printf("\n(-) Número de aluno: ");
   scanf("%d", &nr_aluno);
 
@@ -224,6 +240,97 @@ void menu_consultar_estudantes(struct estudante_data lista_alunos[], int alunos_
   menu_registar_consultar_estudantes(lista_alunos, alunos_count);
 }
 
+// #2 MENU REGISTAR E CONSULTAR UC
+void menu_registar_consultar_uc(struct unidade_curricular lista_uc[], int uc_count)
+{
+  int option = 0;
+
+  do
+  {
+    printf("\n(-) Escolhe uma opção: ");
+    scanf("%d", &option);
+
+    if (option < 0 || option > 2)
+      mostrar_erro("Opção inválida!\n");
+
+  } while (option < 0 || option > 2);
+
+  switch (option)
+  {
+  case 1:
+    menu_registar_uc(lista_uc, uc_count);
+    break;
+  case 2:
+    menu_consultar_uc(lista_uc, uc_count);
+    break;
+  default:
+    mostrar_erro("Opção inválida!\n");
+    break;
+  }
+}
+// ---------------------------- REGISTAR ----------------------------
+
+void menu_registar_uc(struct unidade_curricular lista_uc[], int uc_count)
+{
+  int db_id = uc_count + 1, uc_codigo = 0, ano = 0, semestre = 0, ects = 0;
+  char nome[MAX_UC_NAME_LENGTH];
+
+  printf("\n(-) Código da UC: ");
+  scanf("%d", &uc_codigo);
+
+  // Limpar o buffer de entrada para evitar problemas com fgets
+  while ((getchar()) != '\n');
+
+
+  ler_string(nome, MAX_UC_NAME_LENGTH);
+
+  printf("(-) Ano: ");
+  scanf("%d", &ano);
+
+  printf("(-) Semestre: ");
+  scanf("%d", &semestre);
+
+  printf("(-) ECTS: ");
+  scanf("%d", &ects);
+
+  // Copiar os dados para a struct no índice apropriado
+  strcpy(lista_uc[db_id - 1].nome, nome);
+  lista_uc[db_id - 1].db_id = db_id;
+  lista_uc[db_id - 1].uc_codigo = uc_codigo;
+  lista_uc[db_id - 1].ano = ano;
+  lista_uc[db_id - 1].semestre = semestre;
+  lista_uc[db_id - 1].ects = ects;
+
+  printf("\n(+) Unidade curricular registada com sucesso!\n");
+
+  menu_registar_consultar_uc(lista_uc, db_id);
+}
+void menu_consultar_uc(struct unidade_curricular lista_uc[], int uc_count)
+{
+  int uc_id = 0, uc_db_id = -1;
+  do
+  {
+    printf("\nIndique o código da unidade curricular (total unidades curriculares %d): ", uc_count);
+    scanf("%d", &uc_id);
+
+    uc_db_id = check_numero_uc(lista_uc, uc_count, uc_id);
+
+    if (uc_db_id <= -1)
+      mostrar_erro("A unidade curricular não existe!\n");
+
+  } while (uc_db_id <= -1);
+
+  printf("\nDetalhes sobre unidade curricular: %s (#%d)\n", lista_uc[uc_db_id].nome, lista_uc[uc_db_id].uc_codigo);
+
+  printf("(-) Nome: %s\n", lista_uc[uc_db_id].nome);
+  printf("(-) Código da UC: %d\n", lista_uc[uc_db_id].uc_codigo);
+  printf("(-) Ano: %d\n", lista_uc[uc_db_id].ano);
+  printf("(-) Semestre: %d\n", lista_uc[uc_db_id].semestre);
+  printf("(-) ECTS: %d\n", lista_uc[uc_db_id].ects);
+
+  menu_registar_consultar_uc(lista_uc, uc_count);
+}
+
 // -------------------------------------------------------- FUNÇÕES AUXILIARES --------------------------------------------------------
 // Verificar se o numero total de alunos já foi atingido
 int check_total_alunos(int total_alunos)
@@ -249,6 +356,38 @@ int check_numero_aluno(struct estudante_data lista_alunos[], int alunos_count, i
     }
   }
   return aluno_index;
+}
+
+int check_numero_uc(struct unidade_curricular lista_uc[], int uc_count, int uc_id)
+{
+  // percorrer ao ficheiro (data.txt) e verificar se o aluno existe
+  int uc_index = -1;
+  for (int i = 0; i < uc_count; i++)
+  {
+    if (lista_uc[i].uc_codigo == uc_id || lista_uc[i].db_id == uc_id)
+    {
+      uc_index = i;
+      break;
+    }
+  }
+  return uc_index;
+}
+
+char* ler_string(char string[], int max_length)
+{
+    printf("%s: ", string);
+    fgets(string, max_length, stdin);
+    string[strcspn(string, "\n")] = '\0';
+    return string;
+}
+
+int ler_numero(char msg[])
+{
+  int numero = 0;
+
+  printf("%s: ", msg);
+  scanf("%d", &numero);
+  return numero;
 }
 
 void mostrar_erro(char erro[])
