@@ -25,7 +25,9 @@
 // ERROS
 #define MAX_ERRO_LENGTH 256
 #define MAX_ACCEPTABLE_STRING 512
-#define MAX_ACCEPTABLE_NUMBER 999
+
+#define MIN_ACCEPTABLE_NUMBER 0
+#define MAX_ACCEPTABLE_NUMBER 9999999
 struct estudante_data
 {
   int db_id;
@@ -76,8 +78,11 @@ int get_aluno_db_id(struct estudante_data lista_alunos[], int);
 int check_numero_uc(struct unidade_curricular lista_uc[], int, int);
 int get_uc_id(struct unidade_curricular lista_uc[], int);
 
+char *check_email(char[]);
+int is_valid_email(char[]);
+
 char *ler_string(char[], char[], int);
-int ler_numero(char[]);
+int ler_numero(char[], int);
 
 // FUNÇÕES DE ERRO
 void mostrar_erro(char erro[]);
@@ -184,13 +189,13 @@ void menu_registar_consultar_estudantes(struct estudante_data lista_alunos[], in
     menu_registar_estudante(lista_alunos, alunos_count);
     break;
   case MENU_CONSULTAR_ESTUDANTE:
-    if (!alunos_count)
+    if (!alunos_count) {
       mostrar_erro("Não existem estudantes registados!\n");
+      menu_registar_consultar_estudantes(lista_alunos, alunos_count);
+    }
+
     else
       menu_consultar_estudantes(lista_alunos, alunos_count);
-    break;
-  default:
-    mostrar_erro("Opção inválida!\n");
     break;
   }
 }
@@ -200,14 +205,11 @@ void menu_registar_estudante(struct estudante_data lista_alunos[], int alunos_co
   int db_id = alunos_count + 1, nr_aluno = 0, codigo_curso = 0;
   char nome[MAX_NAME_LENGTH], email[MAX_EMAIL_LENGTH];
 
-  printf("\n(-) Número de aluno: ");
-  scanf("%d", &nr_aluno);
-  fflush(stdin);
-  printf("(-) Nome: ");
-  fgets(nome, MAX_NAME_LENGTH, stdin);
-  printf("(-) Email: ");
-  fgets(email, MAX_EMAIL_LENGTH, stdin);
-  printf("(-) Código do curso: ");
+  ler_string("(-) Nome: ", nome, MAX_NAME_LENGTH);
+  nr_aluno = ler_numero("(-) Número de aluno: ", MAX_ACCEPTABLE_NUMBER);
+  check_email(email);
+  codigo_curso = ler_numero("(-) Código do curso: ", MAX_ACCEPTABLE_NUMBER);
+
   strcpy(lista_alunos[db_id - 1].nome, nome);
   strcpy(lista_alunos[db_id - 1].email, email);
   lista_alunos[db_id - 1].nr_aluno = nr_aluno;
@@ -222,7 +224,7 @@ void menu_registar_estudante(struct estudante_data lista_alunos[], int alunos_co
 void menu_consultar_estudantes(struct estudante_data lista_alunos[], int alunos_count)
 {
 
-  int aluno_db_id = -1;
+  int aluno_db_id;
 
   aluno_db_id = get_aluno_db_id(lista_alunos, alunos_count);
 
@@ -243,7 +245,7 @@ void menu_registar_consultar_uc(struct unidade_curricular lista_uc[], int uc_cou
 {
   int option = 0;
 
-  option = ler_numero("Escolhe uma opção: ");
+  option = ler_numero("Escolhe uma opção: ", 2);
 
   switch (option)
   {
@@ -264,13 +266,13 @@ void menu_registar_uc(struct unidade_curricular lista_uc[], int uc_count)
 {
   int db_id = uc_count + 1, uc_codigo = 0, ano = 0, semestre = 0, ects = 0;
   char nome[MAX_UC_NAME_LENGTH];
-  printf("\n(-) Código da UC: ");
-  uc_codigo = ler_numero("(-) Código da UC: ");
-  fflush(stdin);
+
   ler_string("(-) Nome: ", nome, MAX_UC_NAME_LENGTH);
-  ano = ler_numero("(-) Ano: ");
-  semestre = ler_numero("(-) Semestre: ");
-  ects = ler_numero("(-) ECTS: ");
+
+  uc_codigo = ler_numero("(-) Código da UC: ", 9);
+  ano = ler_numero("(-) Ano: ", 2);
+  semestre = ler_numero("(-) Semestre: ", 2);
+  ects = ler_numero("(-) ECTS: ", 6);
 
   strcpy(lista_uc[db_id - 1].nome, nome);
   lista_uc[db_id - 1].db_id = db_id;
@@ -373,23 +375,65 @@ int check_numero_uc(struct unidade_curricular lista_uc[], int uc_count, int uc_i
   return uc_index;
 }
 
-char *ler_string(char *prompt, char *string, int max_length) {
-    printf("%s: ", prompt);
+char *ler_string(char *prompt, char *string, int max_length)
+{
+  do
+  {
+    printf("%s", prompt);
     fgets(string, max_length, stdin);
     string[strcspn(string, "\n")] = '\0';
-    return string;
+  } while (!strlen(string) || strlen(string) > max_length);
+
+  return string;
 }
 
-int ler_numero(char *prompt) {
-    int result;
+int ler_numero(char *prompt, int max_length)
+{
+  int number = 0;
 
-    do {
-        printf("%s: ", prompt);
-        scanf("%d", &result);
-        fflush(stdin);
-    } while(!result || result > MAX_ACCEPTABLE_NUMBER);
+  do
+  {
+    printf("%s", prompt);
+    scanf("%d", &number);
+    fflush(stdin);
 
-    return result;
+    if (!number || number > max_length)
+      mostrar_erro("Número inválido!\n");
+
+  } while (!number || number > max_length);
+
+  return number;
+}
+
+char *check_email(char *emailAddress)
+{
+
+  do
+  {
+    ler_string("(-) Email: ", emailAddress, MAX_EMAIL_LENGTH);
+
+  } while (!is_valid_email(emailAddress));
+
+  return emailAddress;
+}
+
+int is_valid_email(char emailAddress[])
+{
+  int isValid = 0;
+
+  for (int i = 0; i < MAX_EMAIL_LENGTH; i++)
+  {
+    if (emailAddress[i] == '@')
+    {
+      isValid = 1;
+      break;
+    }
+  }
+
+  if (!isValid)
+    printf("Email inválido!\n");
+
+  return isValid;
 }
 
 void mostrar_erro(char erro[])
