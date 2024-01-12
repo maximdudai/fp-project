@@ -82,7 +82,7 @@ char *check_email(char[]);
 int is_valid_email(char[]);
 
 char *ler_string(char[], char[], int);
-int ler_numero(char[], int);
+int ler_numero(char[], int, int);
 
 // FUNÇÕES DE ERRO
 void mostrar_erro(char erro[]);
@@ -175,11 +175,8 @@ void menu_registar_consultar_estudantes(struct estudante_data lista_alunos[], in
     printf("\n② Consultar os dados dos estudantes\n");
     printf("\n");
     printf("Ⓞ - Sair\n");
-    printf("\n(-) Escolhe uma opção: ");
-    scanf("%d", &option);
 
-    if (option < 0 || option > 2)
-      mostrar_erro("Opção inválida!\n");
+    option = ler_numero("Escolhe uma opção: ", -1, 2);
 
   } while (option < 0 || option > 2);
 
@@ -189,7 +186,8 @@ void menu_registar_consultar_estudantes(struct estudante_data lista_alunos[], in
     menu_registar_estudante(lista_alunos, alunos_count);
     break;
   case MENU_CONSULTAR_ESTUDANTE:
-    if (!alunos_count) {
+    if (!alunos_count)
+    {
       mostrar_erro("Não existem estudantes registados!\n");
       menu_registar_consultar_estudantes(lista_alunos, alunos_count);
     }
@@ -205,10 +203,12 @@ void menu_registar_estudante(struct estudante_data lista_alunos[], int alunos_co
   int db_id = alunos_count + 1, nr_aluno = 0, codigo_curso = 0;
   char nome[MAX_NAME_LENGTH], email[MAX_EMAIL_LENGTH];
 
+  while (getchar() != '\n');
+
   ler_string("(-) Nome: ", nome, MAX_NAME_LENGTH);
-  nr_aluno = ler_numero("(-) Número de aluno: ", MAX_ACCEPTABLE_NUMBER);
+  nr_aluno = ler_numero("(-) Número de aluno: ", 1, MAX_ACCEPTABLE_NUMBER);
   check_email(email);
-  codigo_curso = ler_numero("(-) Código do curso: ", MAX_ACCEPTABLE_NUMBER);
+  codigo_curso = ler_numero("(-) Código do curso: ", 1000, MAX_ACCEPTABLE_NUMBER);
 
   strcpy(lista_alunos[db_id - 1].nome, nome);
   strcpy(lista_alunos[db_id - 1].email, email);
@@ -227,15 +227,13 @@ void menu_consultar_estudantes(struct estudante_data lista_alunos[], int alunos_
   int aluno_db_id;
 
   aluno_db_id = get_aluno_db_id(lista_alunos, alunos_count);
-
   // caso aluno_db_id seja -1 mandar o usuario para o menu de registar e consultar estudantes
 
   printf("\nDetalhes sobre aluno: %s (#%d)\n", lista_alunos[aluno_db_id].nome, lista_alunos[aluno_db_id].nr_aluno);
 
-  printf("(-) Nome: %s\n", lista_alunos[aluno_db_id].nome);
-  printf("(-) Email: %s\n", lista_alunos[aluno_db_id].email);
-  printf("(-) Número de aluno: %d\n", lista_alunos[aluno_db_id].nr_aluno);
-  printf("(-) Código do curso: %d\n", lista_alunos[aluno_db_id].codigo_curso);
+  printf("Nome\t\tEmail\t\tNúmero de aluno\t\tCódigo do curso\n");
+  printf("------------------------------------------------------\n");
+  printf("%s\t\t%s\t\t%d\t\t%d\n", lista_alunos[aluno_db_id].nome, lista_alunos[aluno_db_id].email, lista_alunos[aluno_db_id].nr_aluno, lista_alunos[aluno_db_id].codigo_curso);
 
   menu_registar_consultar_estudantes(lista_alunos, alunos_count);
 }
@@ -244,8 +242,16 @@ void menu_consultar_estudantes(struct estudante_data lista_alunos[], int alunos_
 void menu_registar_consultar_uc(struct unidade_curricular lista_uc[], int uc_count)
 {
   int option = 0;
+  do
+  {
+    printf("\n① Registar os dados das unidades curriculares");
+    printf("\n② Consultar os dados das unidades curriculares\n");
+    printf("\n");
+    printf("Ⓞ - Sair\n");
 
-  option = ler_numero("Escolhe uma opção: ", 2);
+    option = ler_numero("Escolhe uma opção: ", -1, 2);
+
+  } while (option < 0 || option > 2);
 
   switch (option)
   {
@@ -254,9 +260,6 @@ void menu_registar_consultar_uc(struct unidade_curricular lista_uc[], int uc_cou
     break;
   case MENU_CONSULTAR_UC:
     menu_consultar_uc(lista_uc, uc_count);
-    break;
-  default:
-    mostrar_erro("Opção inválida!\n");
     break;
   }
 }
@@ -267,12 +270,14 @@ void menu_registar_uc(struct unidade_curricular lista_uc[], int uc_count)
   int db_id = uc_count + 1, uc_codigo = 0, ano = 0, semestre = 0, ects = 0;
   char nome[MAX_UC_NAME_LENGTH];
 
+  // while (getchar() != '\n');
+
   ler_string("(-) Nome: ", nome, MAX_UC_NAME_LENGTH);
 
-  uc_codigo = ler_numero("(-) Código da UC: ", 9);
-  ano = ler_numero("(-) Ano: ", 2);
-  semestre = ler_numero("(-) Semestre: ", 2);
-  ects = ler_numero("(-) ECTS: ", 6);
+  uc_codigo = ler_numero("(-) Código da UC: ", 1, MAX_ACCEPTABLE_NUMBER);
+  ano = ler_numero("(-) Ano: ", -1, 2);
+  semestre = ler_numero("(-) Semestre: ", -1, 2);
+  ects = ler_numero("(-) ECTS: ", -1, 7);
 
   strcpy(lista_uc[db_id - 1].nome, nome);
   lista_uc[db_id - 1].db_id = db_id;
@@ -287,19 +292,20 @@ void menu_registar_uc(struct unidade_curricular lista_uc[], int uc_count)
 }
 void menu_consultar_uc(struct unidade_curricular lista_uc[], int uc_count)
 {
-  int uc_db_id = -1;
+  int uc_db_id;
+
+  printf("#debug: uc count: %d", uc_count);
 
   uc_db_id = get_uc_id(lista_uc, uc_count);
 
+  printf("uc_db_id: %d\n", uc_db_id);
   // caso uc_db_id seja -1 mandar o usuario para o menu de registar e consultar uc
 
   printf("\nDetalhes sobre unidade curricular: %s (#%d)\n", lista_uc[uc_db_id].nome, lista_uc[uc_db_id].uc_codigo);
 
-  printf("(-) Nome: %s\n", lista_uc[uc_db_id].nome);
-  printf("(-) Código da UC: %d\n", lista_uc[uc_db_id].uc_codigo);
-  printf("(-) Ano: %d\n", lista_uc[uc_db_id].ano);
-  printf("(-) Semestre: %d\n", lista_uc[uc_db_id].semestre);
-  printf("(-) ECTS: %d\n", lista_uc[uc_db_id].ects);
+  printf("Nome\t\tCódigo da UC\t\tAno\t\tSemestre\t\tECTS\n");
+  printf("------------------------------------------------------\n");
+  printf("%s\t\t%d\t\t%d\t\t%d\t\t%d\n", lista_uc[uc_db_id].nome, lista_uc[uc_db_id].uc_codigo, lista_uc[uc_db_id].ano, lista_uc[uc_db_id].semestre, lista_uc[uc_db_id].ects);
 
   menu_registar_consultar_uc(lista_uc, uc_count);
 }
@@ -351,7 +357,7 @@ int check_numero_aluno(struct estudante_data lista_alunos[], int alunos_count, i
   int aluno_index = -1;
   for (int i = 0; i < alunos_count; i++)
   {
-    if (lista_alunos[i].nr_aluno == aluno_id || lista_alunos[i].db_id == aluno_id)
+    if (lista_alunos[i].nr_aluno == aluno_id)
     {
       aluno_index = i;
       break;
@@ -366,7 +372,7 @@ int check_numero_uc(struct unidade_curricular lista_uc[], int uc_count, int uc_i
   int uc_index = -1;
   for (int i = 0; i < uc_count; i++)
   {
-    if (lista_uc[i].uc_codigo == uc_id || lista_uc[i].db_id == uc_id)
+    if (lista_uc[i].uc_codigo == uc_id)
     {
       uc_index = i;
       break;
@@ -387,7 +393,7 @@ char *ler_string(char *prompt, char *string, int max_length)
   return string;
 }
 
-int ler_numero(char *prompt, int max_length)
+int ler_numero(char *prompt, int min_number, int max_number)
 {
   int number = 0;
 
@@ -397,10 +403,10 @@ int ler_numero(char *prompt, int max_length)
     scanf("%d", &number);
     fflush(stdin);
 
-    if (!number || number > max_length)
+    if (number <= min_number || number > max_number)
       mostrar_erro("Número inválido!\n");
 
-  } while (!number || number > max_length);
+  } while (number <= min_number || number > max_number);
 
   return number;
 }
