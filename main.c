@@ -203,7 +203,7 @@ void menu_registar_estudante(struct estudante_data lista_alunos[], int alunos_co
   int db_id = alunos_count + 1, nr_aluno = 0, codigo_curso = 0;
   char nome[MAX_NAME_LENGTH], email[MAX_EMAIL_LENGTH];
 
-  while (getchar() != '\n');
+  fflush(stdin);
 
   ler_string("(-) Nome: ", nome, MAX_NAME_LENGTH);
   nr_aluno = ler_numero("(-) Número de aluno: ", 1, MAX_ACCEPTABLE_NUMBER);
@@ -232,7 +232,7 @@ void menu_consultar_estudantes(struct estudante_data lista_alunos[], int alunos_
   printf("\nDetalhes sobre aluno: %s (#%d)\n", lista_alunos[aluno_db_id].nome, lista_alunos[aluno_db_id].nr_aluno);
 
   printf("Nome\t\tEmail\t\tNúmero de aluno\t\tCódigo do curso\n");
-  printf("------------------------------------------------------\n");
+  printf("--------------------------------------------------------------------------\n");
   printf("%s\t\t%s\t\t%d\t\t%d\n", lista_alunos[aluno_db_id].nome, lista_alunos[aluno_db_id].email, lista_alunos[aluno_db_id].nr_aluno, lista_alunos[aluno_db_id].codigo_curso);
 
   menu_registar_consultar_estudantes(lista_alunos, alunos_count);
@@ -294,17 +294,14 @@ void menu_consultar_uc(struct unidade_curricular lista_uc[], int uc_count)
 {
   int uc_db_id;
 
-  printf("#debug: uc count: %d", uc_count);
-
   uc_db_id = get_uc_id(lista_uc, uc_count);
 
-  printf("uc_db_id: %d\n", uc_db_id);
-  // caso uc_db_id seja -1 mandar o usuario para o menu de registar e consultar uc
+  // caso uc_db_id s eja -1 mandar o usuario para o menu de registar e consultar uc
 
   printf("\nDetalhes sobre unidade curricular: %s (#%d)\n", lista_uc[uc_db_id].nome, lista_uc[uc_db_id].uc_codigo);
 
   printf("Nome\t\tCódigo da UC\t\tAno\t\tSemestre\t\tECTS\n");
-  printf("------------------------------------------------------\n");
+  printf("-----------------------------------------------------------------------------------\n");
   printf("%s\t\t%d\t\t%d\t\t%d\t\t%d\n", lista_uc[uc_db_id].nome, lista_uc[uc_db_id].uc_codigo, lista_uc[uc_db_id].ano, lista_uc[uc_db_id].semestre, lista_uc[uc_db_id].ects);
 
   menu_registar_consultar_uc(lista_uc, uc_count);
@@ -317,13 +314,15 @@ int get_uc_id(struct unidade_curricular lista_uc[], int uc_count)
   int uc_id = 0, uc_db_id = -1;
   do
   {
-    printf("\nIndique o código da unidade curricular (total unidades curriculares %d): ", uc_count);
-    scanf("%d", &uc_id);
+    uc_id = ler_numero("\nIndique o código da unidade curricular: ", 1, MAX_ACCEPTABLE_NUMBER);
     uc_db_id = check_numero_uc(lista_uc, uc_count, uc_id);
+
     if (uc_db_id <= -1)
       mostrar_erro("A unidade curricular não existe!\n");
+
   } while (uc_db_id <= -1);
-  return uc_id;
+
+  return uc_db_id;
 }
 
 int get_aluno_db_id(struct estudante_data lista_alunos[], int alunos_count)
