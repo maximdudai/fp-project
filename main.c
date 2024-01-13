@@ -448,7 +448,6 @@ int menu_registar_avaliacao(struct avaliacao_data lista_avaliacoes[], int avalia
 // ---------------------------- CONSULTAR ----------------------------
 void menu_consultar_avaliacoes(struct avaliacao_data lista_avaliacoes[], int avaliacoes_count, struct estudante_data lista_alunos[], int alunos_count, struct unidade_curricular lista_uc[])
 {
-  int avaliacao_db_id, tipo = 0;
   char tipo_result[MAX_ACCEPTABLE_STRING];
   int aluno_db_id = get_aluno_db_id(lista_alunos, alunos_count);
 
