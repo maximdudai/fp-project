@@ -17,10 +17,14 @@
 #define MENU_REGISTAR_UC 1
 #define MENU_CONSULTAR_UC 2
 
+#define MENU_REGISTAR_AVALIACAO 1
+#define MENU_CONSULTAR_AVALIACAO 2
+
 // CONSTANTES
 #define MAX_NAME_LENGTH 100
 #define MAX_EMAIL_LENGTH 256
 #define MAX_UC_NAME_LENGTH 256
+#define MAX_DATA_CHARS 10
 
 // ERROS
 #define MAX_ERRO_LENGTH 256
@@ -54,26 +58,32 @@ struct avaliacao_data
   int uc_id;
   int ano_letivo;
   int tipo;
-  int data;
+  char data[MAX_DATA_CHARS];
   int nota;
 };
 
 // MENU
 int show_menu_principal(void);
+
 void menu_registar_consultar_estudantes(struct estudante_data lista_alunos[], int);
 void menu_registar_consultar_uc(struct unidade_curricular lista_uc[], int);
+void menu_registar_consultar_avaliacoes(struct avaliacao_data lista_avaliacoes[], int, struct estudante_data lista_alunos[], int, struct unidade_curricular lista_uc[], int);
 
 // FUNÇÕES DE REGISTO
 void menu_registar_estudante(struct estudante_data lista_alunos[], int);
 void menu_registar_uc(struct unidade_curricular lista_uc[], int);
+void menu_registar_avaliacao(struct avaliacao_data lista_avaliacoes[], int, struct estudante_data lista_alunos[], int, struct unidade_curricular lista_uc[], int);
+
 // FUNCÕES DE CONSULTA
 void menu_consultar_estudantes(struct estudante_data lista_alunos[], int);
 void menu_consultar_uc(struct unidade_curricular lista_uc[], int);
+void menu_consultar_avaliacoes(struct avaliacao_data lista_avaliacoes[], int, struct estudante_data lista_alunos[], int, struct unidade_curricular lista_uc[]);
 
 // FUNÇÕES AUXILIARES
 int check_total_alunos(int);
 int check_numero_aluno(struct estudante_data lista_alunos[], int, int);
 int get_aluno_db_id(struct estudante_data lista_alunos[], int);
+char *get_avaliacao_type(int);
 
 int check_numero_uc(struct unidade_curricular lista_uc[], int, int);
 int get_uc_id(struct unidade_curricular lista_uc[], int);
@@ -120,11 +130,9 @@ int main(void)
 
     case MENU_CONSULTAR_REGISTAR_AVALIACOES:
     {
+      menu_registar_consultar_avaliacoes(lista_avaliacoes, avaliacoes_count, lista_alunos, alunos_count, lista_uc, uc_count);
       break;
     }
-
-    default:
-      break;
     }
 
   } while (menu_option != 0);
@@ -133,10 +141,10 @@ int main(void)
 }
 
 int show_menu_principal(void)
+
 {
 
   int option = 0;
-
   do
   {
     printf("\n▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃ M E N U ▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃\n");
@@ -239,6 +247,7 @@ void menu_consultar_estudantes(struct estudante_data lista_alunos[], int alunos_
 }
 
 // #2 MENU REGISTAR E CONSULTAR UC
+// ---------------------------- REGISTAR ----------------------------
 void menu_registar_consultar_uc(struct unidade_curricular lista_uc[], int uc_count)
 {
   int option = 0;
@@ -307,6 +316,82 @@ void menu_consultar_uc(struct unidade_curricular lista_uc[], int uc_count)
   menu_registar_consultar_uc(lista_uc, uc_count);
 }
 
+// #3 MENU REGISTAR E CONSULTAR AVALIACOES
+// ---------------------------- REGISTAR ----------------------------
+void menu_registar_consultar_avaliacoes(struct avaliacao_data lista_avaliacoes[], int avaliacoes_count, struct estudante_data lista_alunos[], int alunos_count, struct unidade_curricular lista_uc[], int uc_count)
+{
+  int option = 0;
+  do
+  {
+    printf("\n① Registar os dados das avaliações");
+    printf("\n② Consultar os dados das avaliações\n");
+    printf("\n");
+    printf("Ⓞ - Sair\n");
+
+    option = ler_numero("Escolhe uma opção: ", -1, 2);
+
+  } while (option < 0 || option > 2);
+
+  switch (option)
+  {
+  case MENU_REGISTAR_AVALIACAO:
+    menu_registar_avaliacao(lista_avaliacoes, avaliacoes_count, lista_alunos, alunos_count, lista_uc, uc_count);
+
+    break;
+  case MENU_CONSULTAR_AVALIACAO:
+    menu_consultar_avaliacoes(lista_avaliacoes, avaliacoes_count, lista_alunos, alunos_count, lista_uc);
+    break;
+  }
+}
+
+void menu_registar_avaliacao(struct avaliacao_data lista_avaliacoes[], int avaliacoes_count, struct estudante_data lista_alunos[], int alunos_count, struct unidade_curricular lista_uc[], int uc_count)
+{
+  int db_id = avaliacoes_count + 1, aluno_id = 0, uc_id = 0, ano_letivo = 0, tipo = 0, nota = 0;
+  char data[MAX_DATA_CHARS];
+
+  aluno_id = get_aluno_db_id(lista_alunos, alunos_count);
+  uc_id = get_uc_id(lista_uc, uc_count);
+
+  ano_letivo = ler_numero("(-) Ano letivo: ", 2023, 2024);
+  tipo = ler_numero("(-) Tipo: ", 1, 3);
+  ler_string("(-) Data: ", data, MAX_DATA_CHARS);
+  nota = ler_numero("(-) Nota: ", 0, 20);
+
+  lista_avaliacoes[db_id - 1].db_id = db_id;
+  lista_avaliacoes[db_id - 1].aluno_id = aluno_id;
+  lista_avaliacoes[db_id - 1].uc_id = uc_id;
+  lista_avaliacoes[db_id - 1].ano_letivo = ano_letivo;
+  lista_avaliacoes[db_id - 1].tipo = tipo;
+  strcpy(lista_avaliacoes[db_id - 1].data, data);
+  lista_avaliacoes[db_id - 1].nota = nota;
+
+  printf("\n(+) Avaliação registada com sucesso!\n");
+
+  menu_registar_consultar_avaliacoes(lista_avaliacoes, db_id, lista_alunos, alunos_count, lista_uc, uc_count);
+}
+
+// ---------------------------- CONSULTAR ----------------------------
+void menu_consultar_avaliacoes(struct avaliacao_data lista_avaliacoes[], int avaliacoes_count, struct estudante_data lista_alunos[], int alunos_count, struct unidade_curricular lista_uc[])
+{
+  int avaliacao_db_id;
+
+  int aluno_db_id = get_aluno_db_id(lista_alunos, alunos_count);
+
+  printf("\nAvaliações do aluno: %s (#%d)\n", lista_alunos[aluno_db_id].nome, lista_alunos[aluno_db_id].nr_aluno);
+
+  printf("Ano letivo\t\tTipo\t\tData\t\tNota\n");
+  printf("-----------------------------------------------------------------------------------\n");
+  
+  for (int i = 0; i < avaliacoes_count; i++)
+  {
+    if (lista_avaliacoes[i].aluno_id == aluno_db_id)
+    {
+      printf("%d\t\t%s\t\t%s\t\t%d\n", lista_avaliacoes[i].ano_letivo, get_avaliacao_type(lista_avaliacoes[i].tipo), lista_avaliacoes[i].data, lista_avaliacoes[i].nota);
+    }
+  }
+
+  menu_registar_consultar_avaliacoes(lista_avaliacoes, avaliacoes_count, lista_alunos, alunos_count, lista_uc, avaliacoes_count);
+}
 // -------------------------------------------------------- FUNÇÕES AUXILIARES --------------------------------------------------------
 
 int get_uc_id(struct unidade_curricular lista_uc[], int uc_count)
@@ -337,6 +422,23 @@ int get_aluno_db_id(struct estudante_data lista_alunos[], int alunos_count)
       mostrar_erro("O aluno não existe!\n");
   } while (aluno_db_id <= -1);
   return aluno_db_id;
+}
+
+char *get_avaliacao_type(int type)
+{
+  char aval_type[MAX_ACCEPTABLE_STRING];
+  char avaliacao_type[3][MAX_ACCEPTABLE_STRING] = {
+      "Avaliação Final Semestre",
+      "Recurso",
+      "Especial"
+  };
+
+  if(type < 1 || type > 3)
+    mostrar_erro("Tipo de avaliação inválido!\n");
+
+  strcpy(aval_type, avaliacao_type[type - 1]);
+
+  return aval_type;
 }
 
 // Verificar se o numero total de alunos já foi atingido
