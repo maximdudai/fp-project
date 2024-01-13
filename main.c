@@ -90,6 +90,9 @@ void menu_consultar_ects(struct estudante_data lista_alunos[], int, struct unida
 void menu_consultar_media_ects(struct estudante_data lista_alunos[], int, struct unidade_curricular lista_uc[], int, struct avaliacao_data lista_avaliacoes[], int);
 void menu_consultar_percentagem_ects_aprovados(struct estudante_data lista_alunos[], int, struct unidade_curricular lista_uc[], int, struct avaliacao_data lista_avaliacoes[], int);
 
+// FUNÇÕES DE FICHEIROS
+void menu_guardar_ficheiro(struct estudante_data lista_alunos[], int, struct unidade_curricular lista_uc[], int, struct avaliacao_data lista_avaliacoes[], int);
+void menu_ler_ficheiro(struct estudante_data lista_alunos[], int, struct unidade_curricular lista_uc[], int, struct avaliacao_data lista_avaliacoes[], int);
 // FUNÇÕES AUXILIARES
 int check_total_alunos(int);
 int check_numero_aluno(struct estudante_data lista_alunos[], int, int);
@@ -122,6 +125,8 @@ int main(void)
 
   struct avaliacao_data lista_avaliacoes[MAX_AVALIACOES];
   int avaliacoes_count = 0;
+
+  int file_option = 0;
 
   do
   {
@@ -162,7 +167,24 @@ int main(void)
     }
     case MENU_GUARDAR_LER_FICHEIROS:
     {
-      menu_ler_guardar_ficheiros(lista_alunos, alunos_count, lista_uc, uc_count, lista_avaliacoes, avaliacoes_count);
+      file_option = menu_ler_guardar_ficheiros(lista_alunos, alunos_count, lista_uc, uc_count, lista_avaliacoes, avaliacoes_count);
+      
+      switch (file_option)
+      {
+        case 1:
+        {
+          menu_guardar_ficheiro(lista_alunos, alunos_count, lista_uc, uc_count, lista_avaliacoes, avaliacoes_count);
+          break;
+        }
+        case 2:
+        {
+          menu_ler_ficheiro(lista_alunos, alunos_count, lista_uc, uc_count, lista_avaliacoes, avaliacoes_count);
+          break;
+        }
+        default:
+          break;
+        }
+
       break;
     }
     case 0:
@@ -597,16 +619,7 @@ int menu_ler_guardar_ficheiros(struct estudante_data lista_alunos[], int alunos_
 
   } while (option < 0 || option > 2);
 
-  switch (option)
-  {
-  case 1:
-    menu_guardar_ficheiro(lista_alunos, alunos_count, lista_uc, uc_count, lista_avaliacoes, avaliacoes_count);
-    break;
-  case 2:
-    menu_ler_ficheiro(lista_alunos, alunos_count, lista_uc, uc_count, lista_avaliacoes, avaliacoes_count);
-    break;
-  }
-  return 0;
+  return option;
 }
 
 void menu_ler_ficheiro(struct estudante_data lista_alunos[], int alunos_count, struct unidade_curricular lista_uc[], int uc_count, struct avaliacao_data lista_avaliacoes[], int avaliacoes_count)
