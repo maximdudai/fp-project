@@ -12,6 +12,8 @@
 #define MENU_CONSULTAR_REGISTAR_AVALIACOES 3
 #define MENU_CONSULTAR_ESTATISTICAS 4
 #define MENU_GUARDAR_LER_FICHEIROS 5
+#define MENU_EXCLUIR_ESTUDANTE 6
+#define MENU_EXCLUIR_UC 7
 
 #define MENU_REGISTAR_ESTUDANTE 1
 #define MENU_CONSULTAR_ESTUDANTE 2
@@ -90,6 +92,11 @@ void menu_consultar_ects(struct estudante_data lista_alunos[], int, struct unida
 void menu_consultar_media_ects(struct estudante_data lista_alunos[], int, struct unidade_curricular lista_uc[], int, struct avaliacao_data lista_avaliacoes[], int);
 void menu_consultar_percentagem_ects_aprovados(struct estudante_data lista_alunos[], int, struct unidade_curricular lista_uc[], int, struct avaliacao_data lista_avaliacoes[], int);
 
+//FUNÇÕES PARA EXCLUSÃO DE DADOS 
+void menu_excluir_estudante_por_numero(struct estudante_data lista_alunos[], int *alunos_count);
+void excluir_uc_por_codigo(struct unidade_curricular lista_uc[], int *uc_count, int cod_uc);
+void menu_excluir_uc_por_codigo(struct unidade_curricular lista_uc[], int *uc_count);
+  
 // FUNÇÕES DE FICHEIROS
 void menu_guardar_ficheiro(struct estudante_data lista_alunos[], int, struct unidade_curricular lista_uc[], int, struct avaliacao_data lista_avaliacoes[], int);
 void menu_ler_ficheiro(struct estudante_data lista_alunos[], int, struct unidade_curricular lista_uc[], int, struct avaliacao_data lista_avaliacoes[], int);
@@ -107,6 +114,9 @@ int is_valid_email(char[]);
 
 char *ler_string(char[], char[], int);
 int ler_numero(char[], int, int);
+
+// Função auxiliar para encontrar o índice de um estudante por número
+int encontrar_indice_estudante_por_numero(struct estudante_data lista_alunos[], int alunos_count, int numero_aluno);
 
 // FUNÇÕES DE ERRO
 void mostrar_erro(char erro[]);
@@ -187,6 +197,16 @@ int main(void)
 
       break;
     }
+    case MENU_EXCLUIR_ESTUDANTE:
+     {
+      menu_excluir_estudante_por_numero(lista_alunos, &alunos_count);
+      break;
+    }
+    case MENU_EXCLUIR_UC:
+    {
+      menu_excluir_uc_por_codigo(lista_uc, &uc_count);
+      break;
+    }
     case 0:
       break;
 
@@ -220,6 +240,8 @@ int show_menu_principal(void)
   printf("③ - Registar e consultar os dados das avaliações\n");
   printf("④ - Estatisticas\n");
   printf("⑤ - Guardar e ler de ficheiros binários os dados da aplicação\n");
+  printf("⑥ - Excluir dados dos alunos\n");
+  printf("⑦ - Excluir dados das UC\n");
   printf("\n");
   printf("Ⓞ - Sair\n");
   printf("------------------------------------------- M E N U -------------------------------------------\n");
@@ -663,6 +685,75 @@ void menu_guardar_ficheiro(struct estudante_data lista_alunos[], int alunos_coun
   printf("\nDados guardados com sucesso!\n");
 }
 
+
+//MENU EXCLUIR DADOS DOS ALUNOS
+void menu_excluir_estudante_por_numero(struct estudante_data lista_alunos[], int *alunos_count)
+{
+int numero_aluno;
+
+    // Solicita ao usuário o número do aluno a ser excluído
+    printf("Digite o número do aluno a ser excluído: ");
+    scanf("%d", &numero_aluno);
+
+    // Encontra o índice do aluno na lista (se existir)
+    int indice_aluno = encontrar_indice_estudante_por_numero(lista_alunos, *alunos_count, numero_aluno);
+
+    // Verifica se o aluno foi encontrado
+    if (indice_aluno != -1) {
+        // Desloca os elementos para excluir o aluno
+        for (int i = indice_aluno; i < *alunos_count - 1; i++) {
+            lista_alunos[i] = lista_alunos[i + 1];
+        }
+
+        // Decrementa o contador de alunos
+        (*alunos_count)--;
+
+        printf("Estudante excluído com sucesso!\n");
+    } else {
+        printf("Estudante não encontrado.\n");
+    }
+}
+
+//MENU EXCLUIR DADOS DA UC 
+void menu_excluir_uc_por_codigo(struct unidade_curricular lista_uc[], int *uc_count) {
+    int cod_uc;
+
+    // Lógica para obter o código da UC a ser excluída, por exemplo, usando scanf
+    printf("Digite o código da Unidade Curricular a ser removida: ");
+    scanf("%d", &cod_uc);
+
+    // Chama a função para excluir a UC
+    excluir_uc_por_codigo(lista_uc, uc_count, cod_uc);
+}
+
+//EXCLUIR DADOS DA UC
+
+void excluir_uc_por_codigo(struct unidade_curricular lista_uc[], int *uc_count, int cod_uc) {
+    int i, j;
+    int encontrou = 0;
+
+    // Procura a UC pelo código
+    for (i = 0; i < *uc_count; i++) {
+        if (lista_uc[i].uc_codigo == cod_uc) {
+            encontrou = 1;
+
+            // Remove a UC da lista movendo as UCs subsequentes para trás
+            for (j = i; j < *uc_count - 1; j++) {
+                lista_uc[j] = lista_uc[j + 1];
+            }
+
+            // Decrementa o contador de UCs
+            (*uc_count)--;
+            printf("Unidade Curricular removida com sucesso.\n");
+            break;  // Sai do loop, já que a UC foi encontrada e removida
+        }
+    }
+
+    if (!encontrou) {
+        printf("Unidade Curricular não encontrada.\n");
+    }
+}
+
 // -------------------------------------------------- FUNÇÕES AUXILIARES --------------------------------------------------
 
 int get_uc_id(struct unidade_curricular lista_uc[], int uc_count)
@@ -828,3 +919,15 @@ void mostrar_erro(char erro[])
 
   printf("(*) ERRO: %s\n", mensagem_erro);
 }
+
+int encontrar_indice_estudante_por_numero(struct estudante_data lista_alunos[], int alunos_count, int numero_aluno){
+     // Percorre a lista de alunos para encontrar o índice do aluno com o número fornecido
+    for (int i = 0; i < alunos_count; i++) {
+        if (lista_alunos[i].nr_aluno == numero_aluno) {
+            return i;  // Retorna o índice do aluno
+        }
+    }
+
+    return -1;  // Retorna -1 se o aluno não for encontrado
+}
+
