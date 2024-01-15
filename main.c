@@ -13,6 +13,7 @@
 #define MENU_CONSULTAR_ESTATISTICAS 4
 #define MENU_GUARDAR_LER_FICHEIROS 5
 #define MENU_EXCLUIR_ESTUDANTE_UC 6
+#define MENU_EDITAR_DADOS 7
 
 
 #define MENU_REGISTAR_ESTUDANTE 1
@@ -26,6 +27,20 @@
 
 #define MENU_EXCLUIR_ESTUDANTE 1
 #define MENU_EXCLUIR_UC 2
+
+#define MENU_EDITAR_ALUNO 1
+#define MENU_EDITAR_UC 2
+
+#define MENU_EDITAR_NOME_ALUNO 1
+#define MENU_EDITAR_NÚMERO 2
+#define MENU_EDITAR_EMAIL 3
+#define MENU_EDITAR_CÓDIGO_CURSO 4
+
+#define MENU_EDITAR_NOME_UC 1
+#define MENU_EDITAR_CODIGO 2
+#define MENU_EDITAR_ANO 3
+#define MENU_EDITAR_SEMESTRE 4
+#define MENU_EDITAR_ECTS 5
 
 // CONSTANTES
 #define MAX_NAME_LENGTH 100
@@ -83,7 +98,9 @@ void menu_consultar_estatisticas(struct estudante_data lista_alunos[], int, stru
 int menu_ler_guardar_ficheiros(struct estudante_data lista_alunos[], int, struct unidade_curricular lista_uc[], int, struct avaliacao_data lista_avaliacoes[], int);
 
 void menu_excluir_dados(struct estudante_data lista_alunos[], int *alunos_count, struct unidade_curricular lista_uc[], int *uc_count);
-
+void editar_informacoes_aluno(struct estudante_data lista_alunos[], int alunos_count);
+void editar_uc(struct unidade_curricular lista_uc[], int uc_count);
+void menu_editar_dados(struct estudante_data lista_alunos[], int *alunos_count, struct unidade_curricular lista_uc[], int *uc_count);
 
 // FUNÇÕES DE REGISTO
 int menu_registar_estudante(struct estudante_data lista_alunos[], int);
@@ -121,8 +138,6 @@ int is_valid_email(char[]);
 char *ler_string(char[], char[], int);
 int ler_numero(char[], int, int);
 
-// Função auxiliar para encontrar o índice de um estudante por número
-int encontrar_indice_estudante_por_numero(struct estudante_data lista_alunos[], int alunos_count, int numero_aluno);
 
 // FUNÇÕES DE ERRO
 void mostrar_erro(char erro[]);
@@ -210,6 +225,10 @@ int main(void)
       menu_excluir_dados(lista_alunos, &alunos_count, lista_uc, &uc_count); 
       break;
     }
+    case MENU_EDITAR_DADOS:
+    {
+      menu_editar_dados(lista_alunos, &alunos_count, lista_uc, &uc_count);
+    }
    
     case 0:
       break;
@@ -228,7 +247,7 @@ char confirmar_saida(void)
 {
   char opcao;
 
-  printf("\nPertende sair? ");
+  printf("\nPretende sair? ");
   scanf(" %c", &opcao);
 
   return opcao;
@@ -245,6 +264,7 @@ int show_menu_principal(void)
   printf("④ - Estatisticas\n");
   printf("⑤ - Guardar e ler de ficheiros binários os dados da aplicação\n");
   printf("⑥ - Excluir Dados\n");
+  printf("⑦ - Editar Dados\n");
   printf("\n");
   printf("Ⓞ - Sair\n");
   printf("------------------------------------------- M E N U -------------------------------------------\n");
@@ -687,13 +707,13 @@ void menu_guardar_ficheiro(struct estudante_data lista_alunos[], int alunos_coun
 
   printf("\nDados guardados com sucesso!\n");
 }
-//MENU EXCLUIR DADOS (ALUNOS E UC´S)
+//#6 MENU EXCLUIR DADOS (ALUNOS E UC´S)
 void menu_excluir_dados(struct estudante_data lista_alunos[], int *alunos_count, struct unidade_curricular lista_uc[], int *uc_count) {
     int escolha_exclusao;
 
     printf("Escolha a opção que deseja excluir\n");
-    printf("① Excluir aluno\n");
-    printf("② Excluir unidade curricular\n");
+    printf("① - Excluir aluno\n");
+    printf("② - Excluir unidade curricular\n");
     printf("Escolha a opção: ");
     scanf("%d", &escolha_exclusao);
 
@@ -715,14 +735,8 @@ void menu_excluir_dados(struct estudante_data lista_alunos[], int *alunos_count,
 //MENU EXCLUIR DADOS DOS ALUNOS
 void menu_excluir_estudante_por_numero(struct estudante_data lista_alunos[], int *alunos_count)
 {
-int numero_aluno;
-
-    // Solicita ao usuário o número do aluno a ser excluído
-    printf("Digite o número do aluno a ser excluído: ");
-    scanf("%d", &numero_aluno);
-
     // Encontra o índice do aluno na lista (se existir)
-    int indice_aluno = encontrar_indice_estudante_por_numero(lista_alunos, *alunos_count, numero_aluno);
+    int indice_aluno = get_aluno_db_id(lista_alunos, *alunos_count);
 
     // Verifica se o aluno foi encontrado
     if (indice_aluno != -1) {
@@ -778,6 +792,121 @@ void excluir_uc_por_codigo(struct unidade_curricular lista_uc[], int *uc_count, 
     if (!encontrou) {
         printf("Unidade Curricular não encontrada.\n");
     }
+}
+
+//#7 MENU EEDITAR DADOS (ALUNOS E UC´S)
+void menu_editar_dados(struct estudante_data lista_alunos[], int *alunos_count, struct unidade_curricular lista_uc[], int *uc_count) {
+    int escolha_edicao;
+
+    printf("Escolha a opção que deseja editar\n");
+    printf("① - Editar aluno\n");
+    printf("② - Editar unidade curricular\n");
+    printf("Escolha a opção: ");
+    scanf("%d", &escolha_edicao);
+
+    switch (escolha_edicao) {
+        case MENU_EDITAR_ALUNO:
+            editar_informacoes_aluno(lista_alunos, *alunos_count);
+            break;
+
+        case MENU_EDITAR_UC:
+            editar_uc(lista_uc, *uc_count);
+            break;
+
+        default:
+            printf("Opção inválida.\n");
+    }
+}
+// Função para editar informações de aluno
+void editar_informacoes_aluno(struct estudante_data lista_alunos[], int alunos_count) {
+    int numero_aluno;
+   
+    // Encontra o índice do aluno na lista (se existir)
+    int indice_aluno = get_aluno_db_id(lista_alunos, alunos_count);
+
+    // Verifica se o aluno foi encontrado
+    if (indice_aluno != -1) {
+        // Aqui, você pode implementar a lógica para editar as informações do aluno
+
+        printf("① - Nome\n");
+        printf("② - Número do aluno\n");
+        printf("③ - E-mail\n");
+        printf("④ - Código do curso\n");
+
+        int opcao;
+        printf("\nO que você deseja editar?: ");
+        scanf("%d", &opcao);
+
+        switch (opcao) {
+            case MENU_EDITAR_NOME_ALUNO:
+                ler_string("(-) Digite o novo nome do aluno: ", lista_alunos[indice_aluno].nome, MAX_NAME_LENGTH);
+                break;
+            case MENU_EDITAR_NÚMERO:
+                printf("Digite o novo número do aluno: ");
+                scanf("%d", &lista_alunos[indice_aluno].nr_aluno);
+                
+                break;
+            case MENU_EDITAR_EMAIL:
+                printf("Digite o novo e-mail: ");
+                scanf("%s", lista_alunos[indice_aluno].email);
+                break;
+            case MENU_EDITAR_CÓDIGO_CURSO:
+                printf("Digite o novo código do curso: ");
+                scanf("%d", &lista_alunos[indice_aluno].codigo_curso);
+                break;
+            default:
+                printf("Opção inválida.\n");
+                break;
+        }
+        printf("Informações do aluno editadas com sucesso!\n");
+    } else {
+        printf("Estudante não encontrado.\n");
+    }
+       
+}
+
+
+// Implementação da função para editar informações da UC
+void editar_uc(struct unidade_curricular lista_uc[], int uc_count) {
+
+  // Encontra o índice do aluno na lista (se existir)
+    int indice_uc = get_uc_id(lista_uc, uc_count);
+    // Menu para editar informações da UC
+    printf("① - Nome\n");
+    printf("② - Código\n");
+    printf("③ - Ano\n");
+    printf("④ - Semestre\n");
+    printf("⑤ - ECTS\n");
+
+    int opcao;
+    printf("\nO que você deseja editar?: ");
+    scanf("%d", &opcao);
+
+    switch (opcao) {
+        case MENU_EDITAR_NOME_UC:
+            ler_string("(-) Digite o novo nome da UC: ", lista_uc[indice_uc].nome, MAX_UC_NAME_LENGTH);
+            break;
+        case MENU_EDITAR_CODIGO:
+              printf("Digite o novo código da UC: ");
+              scanf("%d", &lista_uc[indice_uc].uc_codigo);
+            break;
+        case MENU_EDITAR_ANO:
+              printf("Digite o novo ano da UC: ");
+              scanf("%d", &lista_uc[indice_uc].ano);
+            break;
+        case MENU_EDITAR_SEMESTRE:
+              printf("Digite o novo semestre da UC: ");
+              scanf("%d", &lista_uc[indice_uc].semestre);
+            break;
+        case MENU_EDITAR_ECTS:
+              printf("Digite a nova ECTS da UC: ");
+              scanf("%d", &lista_uc[indice_uc].ects);
+            break;
+        default:
+            printf("Opção inválida.\n");
+            break;
+    }
+     printf("Informações da uc editadas com sucesso!\n");
 }
 
 // -------------------------------------------------- FUNÇÕES AUXILIARES --------------------------------------------------
@@ -946,14 +1075,4 @@ void mostrar_erro(char erro[])
   printf("(*) ERRO: %s\n", mensagem_erro);
 }
 
-int encontrar_indice_estudante_por_numero(struct estudante_data lista_alunos[], int alunos_count, int numero_aluno){
-     // Percorre a lista de alunos para encontrar o índice do aluno com o número fornecido
-    for (int i = 0; i < alunos_count; i++) {
-        if (lista_alunos[i].nr_aluno == numero_aluno) {
-            return i;  // Retorna o índice do aluno
-        }
-    }
-
-    return -1;  // Retorna -1 se o aluno não for encontrado
-}
 
