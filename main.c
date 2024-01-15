@@ -12,8 +12,8 @@
 #define MENU_CONSULTAR_REGISTAR_AVALIACOES 3
 #define MENU_CONSULTAR_ESTATISTICAS 4
 #define MENU_GUARDAR_LER_FICHEIROS 5
-#define MENU_EXCLUIR_ESTUDANTE 6
-#define MENU_EXCLUIR_UC 7
+#define MENU_EXCLUIR_ESTUDANTE_UC 6
+
 
 #define MENU_REGISTAR_ESTUDANTE 1
 #define MENU_CONSULTAR_ESTUDANTE 2
@@ -23,6 +23,9 @@
 
 #define MENU_REGISTAR_AVALIACAO 1
 #define MENU_CONSULTAR_AVALIACAO 2
+
+#define MENU_EXCLUIR_ESTUDANTE 1
+#define MENU_EXCLUIR_UC 2
 
 // CONSTANTES
 #define MAX_NAME_LENGTH 100
@@ -78,6 +81,9 @@ int menu_registar_consultar_uc(struct unidade_curricular lista_uc[], int);
 int menu_registar_consultar_avaliacoes(struct avaliacao_data lista_avaliacoes[], int, struct estudante_data lista_alunos[], int, struct unidade_curricular lista_uc[], int);
 void menu_consultar_estatisticas(struct estudante_data lista_alunos[], int, struct unidade_curricular lista_uc[], int, struct avaliacao_data lista_avaliacoes[], int);
 int menu_ler_guardar_ficheiros(struct estudante_data lista_alunos[], int, struct unidade_curricular lista_uc[], int, struct avaliacao_data lista_avaliacoes[], int);
+
+void menu_excluir_dados(struct estudante_data lista_alunos[], int *alunos_count, struct unidade_curricular lista_uc[], int *uc_count);
+
 
 // FUNÇÕES DE REGISTO
 int menu_registar_estudante(struct estudante_data lista_alunos[], int);
@@ -138,6 +144,8 @@ int main(void)
 
   int file_option = 0;
 
+  int delete_option = 0;
+
   do
   {
     menu_option = show_menu_principal();
@@ -197,16 +205,12 @@ int main(void)
 
       break;
     }
-    case MENU_EXCLUIR_ESTUDANTE:
+    case MENU_EXCLUIR_ESTUDANTE_UC:
      {
-      menu_excluir_estudante_por_numero(lista_alunos, &alunos_count);
+      menu_excluir_dados(lista_alunos, &alunos_count, lista_uc, &uc_count); 
       break;
     }
-    case MENU_EXCLUIR_UC:
-    {
-      menu_excluir_uc_por_codigo(lista_uc, &uc_count);
-      break;
-    }
+   
     case 0:
       break;
 
@@ -240,8 +244,7 @@ int show_menu_principal(void)
   printf("③ - Registar e consultar os dados das avaliações\n");
   printf("④ - Estatisticas\n");
   printf("⑤ - Guardar e ler de ficheiros binários os dados da aplicação\n");
-  printf("⑥ - Excluir dados dos alunos\n");
-  printf("⑦ - Excluir dados das UC\n");
+  printf("⑥ - Excluir Dados\n");
   printf("\n");
   printf("Ⓞ - Sair\n");
   printf("------------------------------------------- M E N U -------------------------------------------\n");
@@ -683,6 +686,29 @@ void menu_guardar_ficheiro(struct estudante_data lista_alunos[], int alunos_coun
   fclose(ficheiro);
 
   printf("\nDados guardados com sucesso!\n");
+}
+//MENU EXCLUIR DADOS (ALUNOS E UC´S)
+void menu_excluir_dados(struct estudante_data lista_alunos[], int *alunos_count, struct unidade_curricular lista_uc[], int *uc_count) {
+    int escolha_exclusao;
+
+    printf("Escolha a opção que deseja excluir\n");
+    printf("① Excluir aluno\n");
+    printf("② Excluir unidade curricular\n");
+    printf("Escolha a opção: ");
+    scanf("%d", &escolha_exclusao);
+
+    switch (escolha_exclusao) {
+        case MENU_EXCLUIR_ESTUDANTE:
+            menu_excluir_estudante_por_numero(lista_alunos, alunos_count);
+            break;
+
+        case MENU_EXCLUIR_UC:
+            menu_excluir_uc_por_codigo(lista_uc, uc_count);
+            break;
+
+        default:
+            printf("Opção inválida.\n");
+    }
 }
 
 
