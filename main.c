@@ -13,6 +13,10 @@
 #define MENU_CONSULTAR_ESTATISTICAS 4
 #define MENU_GUARDAR_LER_FICHEIROS 5
 
+//entrega 2 (main)
+#define MENU_CALCULAR_ALUNOS_AVALIADOS 6
+#define MENU_CALCULAR_ALUNOS_NAO_AVALIADOS 7
+
 #define MENU_REGISTAR_ESTUDANTE 1
 #define MENU_CONSULTAR_ESTUDANTE 2
 
@@ -27,6 +31,9 @@
 #define MAX_EMAIL_LENGTH 256
 #define MAX_UC_NAME_LENGTH 256
 #define MAX_DATA_CHARS 12
+
+//entrega 2
+#define MAX_CONCELHO_LENGTH 144
 
 #define MIN_NUMBER_STUDENT 2000000
 #define MAX_NUMBER_STUDENT 2999999
@@ -43,6 +50,7 @@ struct estudante_data
   int nr_aluno;
   char nome[MAX_NAME_LENGTH];
   int codigo_curso;
+  char concelho[MAX_CONCELHO_LENGTH];
   char email[MAX_EMAIL_LENGTH];
 };
 
@@ -63,6 +71,9 @@ struct avaliacao_data
   int uc_id;
   int ano_letivo;
   int tipo;
+  //entrega 2
+  int avaliado;
+
   char data[MAX_DATA_CHARS];
   int nota;
 };
@@ -90,6 +101,10 @@ void menu_consultar_ects(struct estudante_data lista_alunos[], int, struct unida
 void menu_consultar_media_ects(struct estudante_data lista_alunos[], int, struct unidade_curricular lista_uc[], int, struct avaliacao_data lista_avaliacoes[], int);
 void menu_consultar_percentagem_ects_aprovados(struct estudante_data lista_alunos[], int, struct unidade_curricular lista_uc[], int, struct avaliacao_data lista_avaliacoes[], int);
 
+//entrega 2
+void menu_calcular_avaliados(struct avaliacao_data lista_avaliacoes[], struct unidade_curricular lista_uc[], int, int);
+void menu_calcular_nao_avaliados(struct avaliacao_data lista_avaliacoes[], struct unidade_curricular lista_uc[], int, int);
+
 // FUNÇÕES DE FICHEIROS
 void menu_guardar_ficheiro(struct estudante_data lista_alunos[], int, struct unidade_curricular lista_uc[], int, struct avaliacao_data lista_avaliacoes[], int);
 void menu_ler_ficheiro(struct estudante_data lista_alunos[], int, struct unidade_curricular lista_uc[], int, struct avaliacao_data lista_avaliacoes[], int);
@@ -99,11 +114,22 @@ int check_numero_aluno(struct estudante_data lista_alunos[], int, int);
 int get_aluno_db_id(struct estudante_data lista_alunos[], int);
 void get_avaliacao_type(int, char[]);
 
+//entrega 2
+int calcular_avaliados(struct avaliacao_data lista_avaliacoes[], int, int);
+int calcular_nao_avaliados(struct avaliacao_data lista_avaliacoes[], int, int);
+
+//entrega 2
+void is_aluno_avaliado(int, char[]);
+
 int check_numero_uc(struct unidade_curricular lista_uc[], int, int);
 int get_uc_id(struct unidade_curricular lista_uc[], int);
 
 char *check_email(char[]);
 int is_valid_email(char[]);
+
+//entrega 2
+char *check_concelho(char []);
+int is_valid_concelho(char []);
 
 char *ler_string(char[], char[], int);
 int ler_numero(char[], int, int);
@@ -168,7 +194,7 @@ int main(void)
     case MENU_GUARDAR_LER_FICHEIROS:
     {
       file_option = menu_ler_guardar_ficheiros(lista_alunos, alunos_count, lista_uc, uc_count, lista_avaliacoes, avaliacoes_count);
-      
+
       switch (file_option)
       {
         case 1:
@@ -186,6 +212,25 @@ int main(void)
         }
 
       break;
+    }
+    //entrega 2
+    case MENU_CALCULAR_ALUNOS_AVALIADOS: {
+        if(!avaliacoes_count || !uc_count) {
+            mostrar_erro("Nao dados suficientes!");
+        }
+        else {
+            menu_calcular_avaliados(lista_avaliacoes, lista_uc, avaliacoes_count, uc_count);
+        }
+        break;
+    }
+    case MENU_CALCULAR_ALUNOS_NAO_AVALIADOS: {
+        if(!avaliacoes_count || !uc_count) {
+            mostrar_erro("Nao existem dados suficientes!");
+        }
+        else {
+            menu_calcular_nao_avaliados(lista_avaliacoes, lista_uc, avaliacoes_count, uc_count);
+        }
+        break;
     }
     case 0:
       break;
@@ -215,13 +260,16 @@ int show_menu_principal(void)
   int option = 0;
 
   printf("\n------------------------------------------- M E N U -------------------------------------------\n");
-  printf("① - Registar e consultar os dados dos estudantes\n");
-  printf("② - Registar e consultar os dados das unidades curriculares\n");
-  printf("③ - Registar e consultar os dados das avaliações\n");
-  printf("④ - Estatisticas\n");
-  printf("⑤ - Guardar e ler de ficheiros binários os dados da aplicação\n");
+  printf("1 - Registar e consultar os dados dos estudantes\n");
+  printf("2 - Registar e consultar os dados das unidades curriculares\n");
+  printf("3 - Registar e consultar os dados das avaliações\n");
+  printf("4 - Estatisticas\n");
+  printf("5 - Guardar e ler de ficheiros binários os dados da aplicação\n");
+  //entrega 2
+  printf("6 - Calcular aluno avaliados\n");
+  printf("7 - Calcular alunos nao avaliados\n");
   printf("\n");
-  printf("Ⓞ - Sair\n");
+  printf("0 - Sair\n");
   printf("------------------------------------------- M E N U -------------------------------------------\n");
 
   printf("\n(-) Escolhe uma opção: ");
@@ -268,6 +316,9 @@ int menu_registar_estudante(struct estudante_data lista_alunos[], int alunos_cou
 {
   int db_id = alunos_count + 1, nr_aluno = 0, codigo_curso = 0;
   char nome[MAX_NAME_LENGTH], email[MAX_EMAIL_LENGTH];
+  //entrega 2
+  char concelho[MAX_CONCELHO_LENGTH];
+
   fflush(stdin);
   ler_string("(-) Nome: ", nome, MAX_NAME_LENGTH);
   do
@@ -277,10 +328,18 @@ int menu_registar_estudante(struct estudante_data lista_alunos[], int alunos_cou
     if (check_numero_aluno(lista_alunos, alunos_count, nr_aluno) != -1)
       mostrar_erro("O aluno já existe!\n");
   } while (check_numero_aluno(lista_alunos, alunos_count, nr_aluno) != -1);
+
   check_email(email);
+
+  //Entrega 2
+  check_concelho(concelho);
+
   codigo_curso = ler_numero("(-) Código do curso: ", 1000, MAX_ACCEPTABLE_NUMBER);
   strcpy(lista_alunos[db_id - 1].nome, nome);
   strcpy(lista_alunos[db_id - 1].email, email);
+  //Entrega 2
+  strcpy(lista_alunos[db_id - 1].concelho, concelho);
+
   lista_alunos[db_id - 1].nr_aluno = nr_aluno;
   lista_alunos[db_id - 1].db_id = db_id;
   lista_alunos[db_id - 1].codigo_curso = codigo_curso;
@@ -296,9 +355,10 @@ void menu_consultar_estudantes(struct estudante_data lista_alunos[], int alunos_
   aluno_db_id = get_aluno_db_id(lista_alunos, alunos_count);
   // caso aluno_db_id seja -1 mandar o usuario para o menu de registar e consultar estudantes
   printf("\nDetalhes sobre aluno: %s (#%d)\n", lista_alunos[aluno_db_id].nome, lista_alunos[aluno_db_id].nr_aluno);
-  printf("ID\tNome\t\tEmail\t\tNúmero de aluno\t\tCódigo do curso\n");
+  //entrega 2 (+concelho)
+  printf("ID\tNome\t\tEmail\t\tNúmero de aluno\t\tCódigo do curso\t\tConcelho\n");
   printf("--------------------------------------------------------------------------\n");
-  printf("%d\t\t%s\t\t%s\t\t%d\t\t%d\n", aluno_db_id, lista_alunos[aluno_db_id].nome, lista_alunos[aluno_db_id].email, lista_alunos[aluno_db_id].nr_aluno, lista_alunos[aluno_db_id].codigo_curso);
+  printf("%d\t\t%s\t\t%s\t\t%d\t\t%d\t%s\n", aluno_db_id, lista_alunos[aluno_db_id].nome, lista_alunos[aluno_db_id].email, lista_alunos[aluno_db_id].nr_aluno, lista_alunos[aluno_db_id].codigo_curso, lista_alunos[aluno_db_id].concelho);
 
   menu_registar_consultar_estudantes(lista_alunos, alunos_count);
 }
@@ -426,13 +486,21 @@ int menu_registar_consultar_avaliacoes(struct avaliacao_data lista_avaliacoes[],
 int menu_registar_avaliacao(struct avaliacao_data lista_avaliacoes[], int avaliacoes_count, struct estudante_data lista_alunos[], int alunos_count, struct unidade_curricular lista_uc[], int uc_count)
 {
   int db_id = avaliacoes_count + 1, aluno_id = 0, uc_id = 0, ano_letivo = 0, tipo = 0, nota = 0;
+  //entrega 2
+  int avaliado = 0;
+
   char data[MAX_DATA_CHARS];
   aluno_id = get_aluno_db_id(lista_alunos, alunos_count);
   uc_id = get_uc_id(lista_uc, uc_count);
   ler_string("(-) Data: ", data, MAX_DATA_CHARS);
   ano_letivo = ler_numero("(-) Ano letivo: ", 2023, 2024);
   tipo = ler_numero("(-) Tipo (1 - Avaliacao Final Semetre | 2 - Recurso | 3 - Especial): ", 1, 3);
-  nota = ler_numero("(-) Nota: ", 0, 20);
+
+  //entrega 2
+  avaliado = ler_numero("(-) Avaliado (1 = Avaliado | 2 = Faltou | 3 = Desistiu): ", 1, 3);
+  if(avaliado == 1)
+    nota = ler_numero("(-) Nota: ", 0, 20);
+
   lista_avaliacoes[db_id - 1].db_id = db_id;
   lista_avaliacoes[db_id - 1].aluno_id = aluno_id;
   lista_avaliacoes[db_id - 1].uc_id = uc_id;
@@ -440,6 +508,9 @@ int menu_registar_avaliacao(struct avaliacao_data lista_avaliacoes[], int avalia
   lista_avaliacoes[db_id - 1].tipo = tipo;
   strcpy(lista_avaliacoes[db_id - 1].data, data);
   lista_avaliacoes[db_id - 1].nota = nota;
+  //entrega 2
+  lista_avaliacoes[db_id - 1].avaliado = avaliado;
+
   printf("\n(+) Avaliação registada com sucesso!\n");
   menu_registar_consultar_avaliacoes(lista_avaliacoes, db_id, lista_alunos, alunos_count, lista_uc, uc_count);
   return db_id;
@@ -449,11 +520,15 @@ int menu_registar_avaliacao(struct avaliacao_data lista_avaliacoes[], int avalia
 void menu_consultar_avaliacoes(struct avaliacao_data lista_avaliacoes[], int avaliacoes_count, struct estudante_data lista_alunos[], int alunos_count, struct unidade_curricular lista_uc[])
 {
   char tipo_result[MAX_ACCEPTABLE_STRING];
+
+  //entrega 2
+  char aluno_avaliado[MAX_ACCEPTABLE_STRING];
+
   int aluno_db_id = get_aluno_db_id(lista_alunos, alunos_count);
 
   printf("\nAvaliações do aluno: %s (#%d)\n", lista_alunos[aluno_db_id].nome, lista_alunos[aluno_db_id].nr_aluno);
 
-  printf("ID\tID Estudante\tID UC\tAno letivo\tTipo\tData\tNota\n");
+  printf("ID\tID Estudante\tID UC\tAno letivo\tTipo\tData\tNota\tAvaliado\n");
   printf("-----------------------------------------------------------------------------------\n");
 
   for (int i = 0; i < avaliacoes_count; i++)
@@ -462,7 +537,10 @@ void menu_consultar_avaliacoes(struct avaliacao_data lista_avaliacoes[], int ava
     {
       get_avaliacao_type(lista_avaliacoes[i].tipo, tipo_result);
 
-      printf("%d\t%d\t%d\t%d\t%s\t%s\t%d\n", i, lista_avaliacoes[i].aluno_id, lista_avaliacoes[i].uc_id, lista_avaliacoes[i].ano_letivo, tipo_result, lista_avaliacoes[i].data, lista_avaliacoes[i].nota);
+      //entrega 2
+      is_aluno_avaliado(lista_avaliacoes[i].avaliado, aluno_avaliado);
+
+      printf("%d\t%d\t%d\t%d\t%s\t%s\t%d\t%s\n", i, lista_avaliacoes[i].aluno_id, lista_avaliacoes[i].uc_id, lista_avaliacoes[i].ano_letivo, tipo_result, lista_avaliacoes[i].data, lista_avaliacoes[i].nota, aluno_avaliado);
     }
   }
 
@@ -522,8 +600,12 @@ void menu_consultar_percentagem_ects_aprovados(struct estudante_data lista_aluno
   int aluno_db_id = get_aluno_db_id(lista_alunos, alunos_count);
   int total_ects = 0, total_semestre = 0, total_semestre_ects = 0, total_semestre_ects_count = 0;
   char tipo_result[MAX_ACCEPTABLE_STRING];
+
+  //entrega 2
+  char aluno_avaliado[MAX_ACCEPTABLE_STRING];
+
   printf("\nPercentagem de ECTS em cada semestre letivo por %s (#%d)\n", lista_alunos[aluno_db_id].nome, lista_alunos[aluno_db_id].nr_aluno);
-  printf("ID\tID UC\tAno letivo\tTipo\tData\tNota\n");
+  printf("ID\tID UC\tAno letivo\tTipo\tData\tNota\tAvaliado\n");
   printf("-----------------------------------------------------------------------------------\n");
   for (int i = 0; i < avaliacoes_count; i++)
   {
@@ -531,7 +613,10 @@ void menu_consultar_percentagem_ects_aprovados(struct estudante_data lista_aluno
     {
       get_avaliacao_type(lista_avaliacoes[i].tipo, tipo_result);
 
-      printf("%d\t%d\t%d\t%s\t%s\t%d\n", i, lista_avaliacoes[i].uc_id, lista_avaliacoes[i].ano_letivo, tipo_result, lista_avaliacoes[i].data, lista_avaliacoes[i].nota);
+      //entrega 2
+      is_aluno_avaliado(lista_avaliacoes[i].avaliado, aluno_avaliado);
+
+      printf("%d\t%d\t%d\t%s\t%s\t%d\t%s\n", i, lista_avaliacoes[i].uc_id, lista_avaliacoes[i].ano_letivo, tipo_result, lista_avaliacoes[i].data, lista_avaliacoes[i].nota, aluno_avaliado);
       total_ects += lista_uc[lista_avaliacoes[i].uc_id].ects;
       total_semestre_ects += lista_uc[lista_avaliacoes[i].uc_id].ects;
       total_semestre_ects_count++;
@@ -555,8 +640,12 @@ void menu_consultar_ects(struct estudante_data lista_alunos[], int alunos_count,
   int aluno_db_id = get_aluno_db_id(lista_alunos, alunos_count);
   int total_ects = 0;
   char tipo_result[MAX_ACCEPTABLE_STRING];
+
+  //entrega 2
+  char aluno_avaliado[MAX_ACCEPTABLE_STRING];
+
   printf("\nTotal de ECTS aprovados por %s (#%d)\n", lista_alunos[aluno_db_id].nome, lista_alunos[aluno_db_id].nr_aluno);
-  printf("ID\tID UC\tAno letivo\tTipo\tData\tNota\n");
+  printf("ID\tID UC\tAno letivo\tTipo\tData\tNota\tAvaliado\n");
   printf("-----------------------------------------------------------------------------------\n");
   for (int i = 0; i < avaliacoes_count; i++)
   {
@@ -564,7 +653,10 @@ void menu_consultar_ects(struct estudante_data lista_alunos[], int alunos_count,
     {
       get_avaliacao_type(lista_avaliacoes[i].tipo, tipo_result);
 
-      printf("%d\t%d\t%d\t%s\t%s\t%d\n", i, lista_avaliacoes[i].uc_id, lista_avaliacoes[i].ano_letivo, tipo_result, lista_avaliacoes[i].data, lista_avaliacoes[i].nota);
+      //entrega 2
+      is_aluno_avaliado(lista_avaliacoes[i].avaliado, aluno_avaliado);
+
+      printf("%d\t%d\t%d\t%s\t%s\t%d\t%s\n", i, lista_avaliacoes[i].uc_id, lista_avaliacoes[i].ano_letivo, tipo_result, lista_avaliacoes[i].data, lista_avaliacoes[i].nota, aluno_avaliado);
       total_ects += lista_uc[lista_avaliacoes[i].uc_id].ects;
     }
   }
@@ -577,15 +669,23 @@ void menu_consultar_media_ects(struct estudante_data lista_alunos[], int alunos_
   int aluno_db_id = get_aluno_db_id(lista_alunos, alunos_count);
   int total_ects = 0, total_semestre = 0, total_semestre_ects = 0, total_semestre_ects_count = 0;
   char tipo_result[MAX_ACCEPTABLE_STRING];
+
+  //entrega 2
+  char aluno_avaliado[MAX_ACCEPTABLE_STRING];
+
   printf("\nMédia aritmética de ECTS por semestre letivo por %s (#%d)\n", lista_alunos[aluno_db_id].nome, lista_alunos[aluno_db_id].nr_aluno);
-  printf("ID\tID UC\tAno letivo\tTipo\tData\tNota\n");
+  printf("ID\tID UC\tAno letivo\tTipo\tData\tNota\tAvaliado\n");
   printf("-----------------------------------------------------------------------------------\n");
   for (int i = 0; i < avaliacoes_count; i++)
   {
     if (lista_avaliacoes[i].aluno_id == aluno_db_id && lista_avaliacoes[i].nota >= 10)
     {
       get_avaliacao_type(lista_avaliacoes[i].tipo, tipo_result);
-      printf("%d\t%d\t%d\t%s\t%s\t%d\n", i, lista_avaliacoes[i].uc_id, lista_avaliacoes[i].ano_letivo, tipo_result, lista_avaliacoes[i].data, lista_avaliacoes[i].nota);
+
+      //entrega 2
+      is_aluno_avaliado(lista_avaliacoes[i].avaliado, aluno_avaliado);
+
+      printf("%d\t%d\t%d\t%s\t%s\t%d\t%s\n", i, lista_avaliacoes[i].uc_id, lista_avaliacoes[i].ano_letivo, tipo_result, lista_avaliacoes[i].data, lista_avaliacoes[i].nota, aluno_avaliado);
       total_ects += lista_uc[lista_avaliacoes[i].uc_id].ects;
       total_semestre_ects += lista_uc[lista_avaliacoes[i].uc_id].ects;
       total_semestre_ects_count++;
@@ -663,7 +763,68 @@ void menu_guardar_ficheiro(struct estudante_data lista_alunos[], int alunos_coun
   printf("\nDados guardados com sucesso!\n");
 }
 
+//entrega 2
+
+void menu_calcular_avaliados(struct avaliacao_data lista_avaliacoes[], struct unidade_curricular lista_uc[], int avaliacoes_count, int uc_count) {
+
+  int uc_codigo = 0, total_avaliados = 0;
+
+  do
+  {
+    uc_codigo = ler_numero("(-) Código da UC: ", 1, MAX_ACCEPTABLE_NUMBER);
+
+  } while (check_numero_uc(lista_uc, uc_count, uc_codigo) == -1);
+
+  total_avaliados = calcular_avaliados(lista_avaliacoes, uc_codigo, avaliacoes_count);
+  printf("Numero total de alunos avaliados: %d.", total_avaliados);
+
+}
+
+
+
+void menu_calcular_nao_avaliados(struct avaliacao_data lista_avaliacoes[], struct unidade_curricular lista_uc[], int avaliacoes_count, int uc_count) {
+
+  int uc_codigo = 0, total_nao_avaliados = 0;
+
+  do
+  {
+    uc_codigo = ler_numero("(-) Código da UC: ", 1, MAX_ACCEPTABLE_NUMBER);
+
+  } while (check_numero_uc(lista_uc, uc_count, uc_codigo) == -1);
+
+  total_nao_avaliados = calcular_nao_avaliados(lista_avaliacoes, uc_codigo, avaliacoes_count);
+  printf("Numero total de alunos nao avaliados: %d.", total_nao_avaliados);
+
+}
 // -------------------------------------------------- FUNÇÕES AUXILIARES --------------------------------------------------
+
+//entrega 2
+int calcular_avaliados(struct avaliacao_data lista_avaliacoes[], int uc, int avaliacoes_count) {
+
+    int total_avaliados = 0;
+
+    for(int i = 0; i < avaliacoes_count; i++) {
+        if(lista_avaliacoes[i].avaliado == 1) {
+            total_avaliados ++;
+        }
+    }
+
+    return total_avaliados;
+
+}
+
+int calcular_nao_avaliados(struct avaliacao_data lista_avaliacoes[], int uc, int avaliacoes_count) {
+
+    int total_avaliados = 0;
+    for(int i = 0; i < avaliacoes_count; i++) {
+        if(lista_avaliacoes[i].avaliado != 1 && lista_avaliacoes[i].uc_id == uc) {
+            total_avaliados ++;
+        }
+    }
+
+    return total_avaliados;
+
+}
 
 int get_uc_id(struct unidade_curricular lista_uc[], int uc_count)
 {
@@ -711,6 +872,18 @@ void get_avaliacao_type(int tipo, char result[])
   strcpy(result, avaliacao_type[tipo - 1]);
   result[MAX_ACCEPTABLE_STRING - 1] = '\0';
 }
+
+//entrega 2
+void is_aluno_avaliado(int tipo, char result[])
+{
+  const char *avaliacao_type[3] = {
+      "Avaliado",
+      "Faltou",
+      "Desitiu"};
+  strcpy(result, avaliacao_type[tipo - 1]);
+  result[MAX_ACCEPTABLE_STRING - 1] = '\0';
+}
+
 
 // Verificar se o numero total de alunos já foi atingido
 int check_total_alunos(int total_alunos)
@@ -796,6 +969,19 @@ char *check_email(char *emailAddress)
   return emailAddress;
 }
 
+//entrega 2
+char *check_concelho(char *concelho)
+{
+  do
+  {
+    ler_string("(-) Concelho: ", concelho, MAX_CONCELHO_LENGTH);
+
+  } while (!is_valid_concelho(concelho));
+
+  return concelho;
+}
+
+
 int is_valid_email(char emailAddress[])
 {
   int isValid = 0;
@@ -813,6 +999,19 @@ int is_valid_email(char emailAddress[])
     printf("Email inválido!\n");
 
   return isValid;
+}
+
+//entrega 2
+int is_valid_concelho(char concelho[])
+{
+  int validConcelho = 0;
+  if(strlen(concelho) || strlen(concelho) < MAX_CONCELHO_LENGTH) {
+    validConcelho = 1;
+  }
+  else
+    mostrar_erro("Concelho introduzido errado.");
+
+  return validConcelho;
 }
 
 void mostrar_erro(char erro[])
